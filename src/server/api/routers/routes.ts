@@ -61,7 +61,7 @@ export const allRoutes = createTRPCRouter({
       const data = {
         amount: total,
         products: input.products,
-        liquidation: false,
+        liquidation: true,
         returnLink: env.RETURN_LINK,
       }
       const res = await fetch(`${env.API_LINK}transaction`, {
