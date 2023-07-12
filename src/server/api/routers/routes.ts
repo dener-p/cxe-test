@@ -1,4 +1,4 @@
-import { transactions } from "@/db/schema"
+import { apisKey, transactions } from "@/db/schema"
 import { env } from "@/env.mjs"
 import {
   createTRPCRouter,
@@ -64,12 +64,28 @@ export const allRoutes = createTRPCRouter({
         liquidation: true,
         returnLink: env.RETURN_LINK,
       }
+
+      const apis = await ctx.db
+        .select({
+          apikey: apisKey.key,
+          apisecret: apisKey.secret,
+        })
+        .from(apisKey)
+        .where(eq(apisKey.userId, ctx.userId))
+        .then((i) => i[0])
+      if (!apis) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No api keys found",
+        })
+      }
+
       const res = await fetch(`${env.API_LINK}transaction`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: env.API_KEY,
-          apisecret: env.API_SECRET,
+          apikey: apis.apikey,
+          apisecret: apis.apisecret,
         },
         body: JSON.stringify(data),
       })
@@ -119,12 +135,27 @@ export const allRoutes = createTRPCRouter({
         message: "No orders found",
       })
     }
+
+    const apis = await ctx.db
+      .select({
+        apikey: apisKey.key,
+        apisecret: apisKey.secret,
+      })
+      .from(apisKey)
+      .where(eq(apisKey.userId, ctx.userId))
+      .then((i) => i[0])
+    if (!apis) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "No api keys found",
+      })
+    }
     const res = await fetch(`${env.API_LINK}transactions/status`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        apikey: env.API_KEY,
-        apisecret: env.API_SECRET,
+        apikey: apis.apikey,
+        apisecret: apis.apisecret,
       },
       body: JSON.stringify({ transactions: orders.map((i) => i.orderId) }),
     })
@@ -199,12 +230,26 @@ export const allRoutes = createTRPCRouter({
       const data = {
         returnLink: env.RETURN_LINK,
       }
+      const apis = await ctx.db
+        .select({
+          apikey: apisKey.key,
+          apisecret: apisKey.secret,
+        })
+        .from(apisKey)
+        .where(eq(apisKey.userId, ctx.userId))
+        .then((i) => i[0])
+      if (!apis) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No api keys found",
+        })
+      }
       const res = await fetch(`${env.API_LINK}transaction/${input}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: env.API_KEY,
-          apisecret: env.API_SECRET,
+          apikey: apis.apikey,
+          apisecret: apis.apisecret,
         },
         body: JSON.stringify(data),
       })
@@ -237,5 +282,29 @@ export const allRoutes = createTRPCRouter({
         )
 
       return parsed.data.link
+    }),
+  registerApi: loggedProcedure
+    .input(
+      z.object({
+        apikey: z.string().trim(),
+        apisecret: z.string().trim(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const res = await ctx.db
+        .update(apisKey)
+        .set({
+          key: input.apikey,
+          secret: input.apisecret,
+        })
+        .where(eq(apisKey.userId, ctx.userId))
+      if (res.rowsAffected === 0) {
+        await ctx.db.insert(apisKey).values({
+          key: input.apikey,
+          secret: input.apisecret,
+          userId: ctx.userId,
+        })
+      }
+      return { status: "ok" }
     }),
 })

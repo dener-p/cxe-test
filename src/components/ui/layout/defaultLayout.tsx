@@ -162,6 +162,9 @@ const Header = () => {
         <Link href="/orders" className="text-xl font-bold text-purple-600">
           Pedidos
         </Link>
+        <Link href="/apis" className="text-xl font-bold text-purple-600">
+          Apis
+        </Link>
       </div>
       <div className="flex items-center gap-4">
         <SignedIn>
