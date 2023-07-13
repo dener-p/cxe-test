@@ -9,8 +9,8 @@ import React from "react"
 export default function Apis() {
   const router = useRouter()
   const save = api.example.registerApi.useMutation({
-    onSuccess: () => {
-      router.push("/orders")
+    onSuccess: async () => {
+      await router.push("/orders")
     },
   })
   return (
@@ -18,11 +18,16 @@ export default function Apis() {
       className="flex flex-col gap-4"
       onSubmit={(e) => {
         e.preventDefault()
-        const apikey = e.currentTarget.apikey.value
-        const secret = e.currentTarget.secret.value
+        const form = e.currentTarget
+        const formData = new FormData(form)
+        const data = Object.fromEntries(formData.entries()) as {
+          apikey: string
+          secret: string
+        }
+
         save.mutate({
-          apikey,
-          apisecret: secret,
+          apikey: data.apikey,
+          apisecret: data.secret,
         })
       }}
     >
