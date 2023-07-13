@@ -33,11 +33,11 @@ export default function Apis() {
     >
       <div className="flex flex-col gap-2">
         <Label htmlFor="apikey">apikey</Label>
-        <Input type="text" id="apikey" required />
+        <Input type="text" id="apikey" name="apikey" required />
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="secret">secret</Label>
-        <Input type="text" id="secret" required />
+        <Input type="text" id="secret" name="secret" required />
       </div>
       <Button disabled={save.isLoading || save.isSuccess}>Salvar</Button>
     </form>
